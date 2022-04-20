@@ -3,7 +3,11 @@ import { web3 } from '@project-serum/anchor';
 import { AnchorWallet } from '@solana/wallet-adapter-react';
 import Modal from 'components/Modal';
 import Processing from 'components/Processing';
-import { CandyShop, getAtaForMint } from '@liqnft/candy-shop-sdk';
+import {
+  CandyShop,
+  getAtaForMint,
+  WRAPPED_SOL_MINT
+} from '@liqnft/candy-shop-sdk';
 import React, { useState } from 'react';
 import { Order as OrderSchema } from 'solana-candy-shop-schema/dist';
 import { ErrorMsgMap, ErrorType, handleError } from 'utils/ErrorHandler';
@@ -12,12 +16,12 @@ import { TransactionState } from '../../model';
 import BuyModalConfirmed from './BuyModalConfirmed';
 import BuyModalDetail from './BuyModalDetail';
 import { getAccount } from '@solana/spl-token';
-import { WRAPPED_SOL_MINT } from '@liqnft/candy-shop-sdk';
+
 import './style.less';
 
 export interface BuyModalProps {
   order: OrderSchema;
-  onClose: any;
+  onClose: () => void;
   wallet: AnchorWallet | undefined;
   candyShop: CandyShop;
   walletConnectComponent: React.ReactElement;
@@ -47,7 +51,7 @@ export const BuyModal: React.FC<BuyModalProps> = ({
     setState(TransactionState.PROCESSING);
     // check balance before proceed
     let balance: BN;
-    let connection = await candyShop.connection();
+    const connection = await candyShop.connection();
 
     if (candyShop.treasuryMint.equals(WRAPPED_SOL_MINT)) {
       const account = await connection.getAccountInfo(wallet.publicKey);

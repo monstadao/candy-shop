@@ -1,5 +1,6 @@
-import { CandyShop } from '@liqnft/candy-shop-sdk';
 import React, { useEffect, useState } from 'react';
+import { CandyShop } from '@liqnft/candy-shop-sdk';
+
 import './index.less';
 
 export interface StatProps {

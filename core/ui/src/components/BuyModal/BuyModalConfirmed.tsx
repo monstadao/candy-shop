@@ -8,16 +8,18 @@ import { ExplorerLink } from '../ExplorerLink';
 import { LiqImage } from 'components/LiqImage';
 import IconTick from 'assets/IconTick';
 
-const BuyModalConfirmed = ({
-  order,
-  txHash,
-  walletPublicKey,
-  candyShop
-}: {
+interface BuyModalConfirmedProps {
   order: any;
   txHash: string;
   walletPublicKey: web3.PublicKey | undefined;
   candyShop: CandyShop;
+}
+
+const BuyModalConfirmed: React.FC<BuyModalConfirmedProps> = ({
+  order,
+  txHash,
+  walletPublicKey,
+  candyShop
 }) => {
   // Get wallet address follow walletPublicKey
   const walletAddress = useMemo(
@@ -26,17 +28,15 @@ const BuyModalConfirmed = ({
   );
 
   const orderPrice = useMemo(() => {
-    try {
-      return (
-        Number(order?.price) / candyShop.baseUnitsPerCurrency
-      ).toLocaleString(undefined, {
-        minimumFractionDigits: candyShop.priceDecimals,
-        maximumFractionDigits: candyShop.priceDecimals
-      });
-    } catch (err) {
-      return null;
-    }
-  }, [order]);
+    if (!order?.price) return null;
+
+    return (
+      Number(order?.price) / candyShop.baseUnitsPerCurrency
+    ).toLocaleString(undefined, {
+      minimumFractionDigits: candyShop.priceDecimals,
+      maximumFractionDigits: candyShop.priceDecimals
+    });
+  }, [candyShop.baseUnitsPerCurrency, candyShop.priceDecimals, order?.price]);
 
   return (
     <div className="candy-buy-modal-confirmed">

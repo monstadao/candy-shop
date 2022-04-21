@@ -4,13 +4,14 @@ import IconTick from 'assets/IconTick';
 import Modal from 'components/Modal';
 import Processing from 'components/Processing';
 import { CandyShop, SingleTokenInfo } from '@liqnft/candy-shop-sdk';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorMsgMap } from 'utils/ErrorHandler';
 import { ErrorType, handleError } from 'utils/ErrorHandler';
 import { notification, NotificationType } from 'utils/rc-notification';
 import { TransactionState } from '../../model';
 import { LiqImage } from '../LiqImage';
-
+import { CandyActionContext } from 'public/Context';
+import { TIMEOUT_REFETCH_NFT } from 'constant';
 import './style.less';
 
 export interface SellModalProps {
@@ -19,6 +20,8 @@ export interface SellModalProps {
   candyShop: CandyShop;
   wallet: AnchorWallet;
 }
+
+let timeout: NodeJS.Timeout;
 
 export const SellModal: React.FC<SellModalProps> = ({
   onCancel: onUnSelectItem,
@@ -30,6 +33,7 @@ export const SellModal: React.FC<SellModalProps> = ({
     price: undefined
   });
   const [state, setState] = useState(TransactionState.DISPLAY);
+  const { setRefetch } = useContext(CandyActionContext);
 
   const regex3Decimals = new RegExp('^[0-9]{1,11}(?:.[0-9]{1,3})?$');
 
@@ -65,7 +69,10 @@ export const SellModal: React.FC<SellModalProps> = ({
           'SellModal: Place sell order with transaction hash= ',
           txHash
         );
-        setState(TransactionState.CONFIRMED);
+        timeout = setTimeout(() => {
+          setRefetch({});
+          setState(TransactionState.CONFIRMED);
+        }, TIMEOUT_REFETCH_NFT);
       })
       .catch((err) => {
         console.log('SellModal: error= ', err);
@@ -91,6 +98,10 @@ export const SellModal: React.FC<SellModalProps> = ({
     if (state === TransactionState.CONFIRMED)
       setTimeout(() => window.location.reload(), 3_000);
   }, [state, onUnSelectItem]);
+
+  useEffect(() => {
+    return () => clearTimeout(timeout);
+  }, []);
 
   const isSubmit = formState.price !== undefined;
 

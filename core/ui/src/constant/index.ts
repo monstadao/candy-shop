@@ -1,0 +1,1 @@
+export const TIMEOUT_REFETCH_NFT = 10_000;

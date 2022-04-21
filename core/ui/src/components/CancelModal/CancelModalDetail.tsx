@@ -2,8 +2,10 @@ import { CandyShop } from '@liqnft/candy-shop-sdk';
 import { BN, web3 } from '@project-serum/anchor';
 import { AnchorWallet } from '@solana/wallet-adapter-react';
 import { ExplorerLink } from 'components/ExplorerLink';
+import { TIMEOUT_REFETCH_NFT } from 'constant';
 import { TransactionState } from 'model';
-import React, { useMemo } from 'react';
+import { CandyActionContext } from 'public/Context';
+import React, { useContext, useEffect, useMemo } from 'react';
 import { Order as OrderSchema } from 'solana-candy-shop-schema/dist';
 import { ErrorType, handleError } from 'utils/ErrorHandler';
 import { LiqImage } from '../LiqImage';
@@ -16,12 +18,15 @@ export interface CancelModalDetailProps {
   wallet: AnchorWallet;
 }
 
+let timeout: NodeJS.Timeout;
 export const CancelModalDetail = ({
   candyShop,
   order,
   onChangeStep,
   wallet
 }: CancelModalDetailProps): JSX.Element => {
+  const { setRefetch } = useContext(CandyActionContext);
+
   const cancel = async () => {
     onChangeStep(TransactionState.PROCESSING);
     candyShop
@@ -32,14 +37,20 @@ export const CancelModalDetail = ({
         wallet
       )
       .then(() => {
-        onChangeStep(TransactionState.CONFIRMED);
+        timeout = setTimeout(() => {
+          setRefetch({});
+          onChangeStep(TransactionState.CONFIRMED);
+        }, TIMEOUT_REFETCH_NFT);
       })
       .catch(() => {
         handleError(ErrorType.TransactionFailed);
+        onChangeStep(TransactionState.DISPLAY);
       });
   };
 
-  const buttonContent = 'Cancel listing';
+  useEffect(() => {
+    return () => clearTimeout(timeout);
+  }, []);
 
   const orderPrice = useMemo(() => {
     try {
@@ -110,3 +121,5 @@ export const CancelModalDetail = ({
     </div>
   );
 };
+
+const buttonContent = 'Cancel listing';

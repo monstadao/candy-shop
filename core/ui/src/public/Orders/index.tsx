@@ -1,45 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Dropdown } from 'components/Dropdown';
 import { Empty } from 'components/Empty';
 import { Skeleton } from 'components/Skeleton';
 import { CandyShop, OrderSortBy } from '@liqnft/candy-shop-sdk';
 import { InfiniteOrderList } from 'components/InfiniteOrderList';
 import { AnchorWallet } from '@solana/wallet-adapter-react';
+import { CandyContext } from 'public/Context';
+
 import './index.less';
-
-const ORDER_FETCH_LIMIT = 12;
-const LOADING_SKELETON_COUNT = 4;
-
-const SORT_OPTIONS: { value: OrderSortBy; label: string }[] = [
-  {
-    value: {
-      column: 'blockTimeAtCreation',
-      order: 'desc'
-    },
-    label: 'Newest'
-  },
-  {
-    value: {
-      column: 'blockTimeAtCreation',
-      order: 'asc'
-    },
-    label: 'Oldest'
-  },
-  {
-    value: {
-      column: 'price',
-      order: 'asc'
-    },
-    label: 'Price: Low → High'
-  },
-  {
-    value: {
-      column: 'price',
-      order: 'desc'
-    },
-    label: 'Price: High → Low'
-  }
-];
 
 interface OrdersProps {
   candyShop: CandyShop;
@@ -68,19 +36,18 @@ export const Orders: React.FC<OrdersProps> = ({
   const [hasNextPage, setHasNextPage] = useState(true);
   const [loading, setLoading] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
-  const [filterIdentifiers, setFilterIdentifiers] = useState<
-    number[] | undefined
-  >(undefined);
+  const [filterIdentifiers, setFilterIdentifiers] = useState<number[]>();
   const [filterName, setFilterName] = useState<string | undefined>(undefined);
+  const { refetch } = useContext(CandyContext);
 
-  const getUniqueIdentifiers = () => {
-    let uniqueIdentifiers = [
+  const getUniqueIdentifiers = useCallback(() => {
+    const uniqueIdentifiers = [
       ...(identifiers || []),
       ...(filterIdentifiers || [])
     ];
 
     return [...new Set(uniqueIdentifiers)];
-  };
+  }, [filterIdentifiers, identifiers]);
 
   const loadNextPage = (startIndex: number, limit: number) => () => {
     candyShop
@@ -132,7 +99,14 @@ export const Orders: React.FC<OrdersProps> = ({
       .finally(() => {
         setLoading(false);
       });
-  }, [candyShop, sortedByOption, filterIdentifiers, identifiers]);
+  }, [
+    candyShop,
+    sortedByOption,
+    filterIdentifiers,
+    identifiers,
+    getUniqueIdentifiers,
+    refetch // refetch when buy/sell/cancel nft
+  ]);
 
   if (filters) {
     return (
@@ -250,3 +224,37 @@ export const Orders: React.FC<OrdersProps> = ({
     </>
   );
 };
+
+const ORDER_FETCH_LIMIT = 12;
+const LOADING_SKELETON_COUNT = 4;
+
+const SORT_OPTIONS: { value: OrderSortBy; label: string }[] = [
+  {
+    value: {
+      column: 'blockTimeAtCreation',
+      order: 'desc'
+    },
+    label: 'Newest'
+  },
+  {
+    value: {
+      column: 'blockTimeAtCreation',
+      order: 'asc'
+    },
+    label: 'Oldest'
+  },
+  {
+    value: {
+      column: 'price',
+      order: 'asc'
+    },
+    label: 'Price: Low → High'
+  },
+  {
+    value: {
+      column: 'price',
+      order: 'desc'
+    },
+    label: 'Price: High → Low'
+  }
+];
